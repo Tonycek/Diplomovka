@@ -190,6 +190,7 @@ include_directories(
 #   # myfile2
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
+add_executable(${PROJECT_NAME}_skuska_node src/skuska.cpp)
 
 add_executable(${PROJECT_NAME}_node src/client.cpp)
 ## Add cmake target dependencies of the executable
@@ -200,6 +201,7 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 target_link_libraries(${PROJECT_NAME}_node
    ${catkin_LIBRARIES}
 )
+
 
 #############
 ## Testing ##

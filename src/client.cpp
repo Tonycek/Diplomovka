@@ -4,7 +4,20 @@
 #include <control_msgs/JointTrajectoryAction.h>
 #include <moveit_msgs/MoveGroupActionGoal.h>
 #include <moveit_msgs/MoveGroupAction.h>
-//#include <Constraints.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <linux/input.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/select.h>
+#include <sys/time.h>
+#include <termios.h>
+#include <signal.h>
 
 int main(int argc, char **argv){
   ros::init(argc, argv, "test");
@@ -21,7 +34,7 @@ int main(int argc, char **argv){
 
   goal.request.group_name = "manipulator";
 //  goal.request.num_planning_attempts = 1;
-  goal.request.allowed_planning_time = 5;
+  goal.request.allowed_planning_time = 10;
   
 /*
   geometry_msgs::PoseStamped pose;
@@ -39,11 +52,36 @@ int main(int argc, char **argv){
   positione.z = 0.0;*/
 
   moveit_msgs::Constraints g0;
-  g0.joint_constraints.resize(1);
+  g0.joint_constraints.resize(6);
   g0.joint_constraints[0].joint_name= "joint_1";
-  g0.joint_constraints[0].position = -0.157835049197; 
+  g0.joint_constraints[0].position = 0;// -0.157835049197; 
   g0.joint_constraints[0].tolerance_above = 0.0001;
-  g0.joint_constraints[0].weight = 1.0;  
+  g0.joint_constraints[0].weight = 1.0; 
+
+  g0.joint_constraints[1].joint_name= "joint_2";
+  g0.joint_constraints[1].position = 0;//-0.157835049197;
+  g0.joint_constraints[1].tolerance_above = 0.0001;
+  g0.joint_constraints[1].weight = 1.0;
+
+  g0.joint_constraints[2].joint_name= "joint_3";
+  g0.joint_constraints[2].position = 0;//-0.157835049197;
+  g0.joint_constraints[2].tolerance_above = 0.0001;
+  g0.joint_constraints[2].weight = 1.0;
+
+  g0.joint_constraints[3].joint_name= "joint_4";
+  g0.joint_constraints[3].position = 0;//-0.157835049197;
+  g0.joint_constraints[3].tolerance_above = 0.0001;
+  g0.joint_constraints[3].weight = 1.0;
+
+  g0.joint_constraints[4].joint_name= "joint_5";
+  g0.joint_constraints[4].position = 0;//-0.157835049197;
+  g0.joint_constraints[4].tolerance_above = 0.0001;
+  g0.joint_constraints[4].weight = 1.0;
+
+  g0.joint_constraints[5].joint_name= "joint_6";
+  g0.joint_constraints[5].position = 0;//-0.157835049197;
+  g0.joint_constraints[5].tolerance_above = 0.0001;
+  g0.joint_constraints[5].weight = 1.0; 
 
   goal.request.goal_constraints.resize(1);
   goal.request.goal_constraints[0] = g0;
@@ -71,7 +109,7 @@ int main(int argc, char **argv){
      ac.sendGoal(goal);
   }
 */
-
+/*
   ac.sendGoal(goal);
    if(!ac.waitForResult(ros::Duration(5))) {
      ROS_INFO_STREAM("Apparently returned early");
@@ -82,6 +120,26 @@ int main(int argc, char **argv){
    ROS_WARN_STREAM("Fail: " << ac.getState().toString() << ": " << ac.getState().getText());
    std::cout << *ac.getResult() << std::endl;
    sleep(5);
+*/
+   char input;
+   std::cout << "Zadaj znak: "; 
+   while(true){
+     std::cin >> input;
+     if (input == 'k')
+     {
+        ac.sendGoal(goal);
+        if(!ac.waitForResult(ros::Duration(10))) {
+           ROS_INFO_STREAM("Apparently returned early");
+        }
+        if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+          ROS_INFO("It worked!");
+        else
+        ROS_WARN_STREAM("Fail: " << ac.getState().toString() << ": " << ac.getState().getText());
+        std::cout << *ac.getResult() << std::endl;
+        sleep(5);
+        break;
+     } 
+   }
 /*  
   goal.trajectory.joint_names.resize(7);
   goal.trajectory.joint_names.push_back("r_shoulder_pan_joint");
