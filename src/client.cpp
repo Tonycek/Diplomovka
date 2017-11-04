@@ -4,6 +4,9 @@
 #include <control_msgs/JointTrajectoryAction.h>
 #include <moveit_msgs/MoveGroupActionGoal.h>
 #include <moveit_msgs/MoveGroupAction.h>
+#include <moveit_msgs/GetPositionIK.h>
+#include <moveit_msgs/KinematicSolverInfo.h>
+#include <moveit_msgs/PositionIKRequest.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,8 +24,17 @@
 
 int main(int argc, char **argv){
   ros::init(argc, argv, "test");
+  ros::NodeHandle rh;
+  
 
   actionlib::SimpleActionClient<moveit_msgs::MoveGroupAction> ac("/move_group/", true);
+
+  ros::service::waitForService("/move_group/compute_ik");
+  ros::ServiceClient ik_client = rh.serviceClient<moveit_msgs::GetPositionIK>("/move_group/compute_ik");
+  
+  // define the service messages
+  moveit_msgs::GetPositionIK request;
+
 
   ROS_INFO("Waiting for action server to start!");
 
