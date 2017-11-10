@@ -33,8 +33,12 @@ int main(int argc, char **argv){
   ros::ServiceClient ik_client = rh.serviceClient<moveit_msgs::GetPositionIK>("/move_group/compute_ik");
   
   // define the service messages
-  moveit_msgs::GetPositionIK request;
+  moveit_msgs::PositionIKRequest ik_request;
+  ik_request.group_name = "stryko";
 
+
+  moveit_msgs::GetPositionIK::Request  gpik_req;
+  moveit_msgs::GetPositionIK::Response gpik_res;
 
   ROS_INFO("Waiting for action server to start!");
 
