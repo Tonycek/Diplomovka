@@ -1,0 +1,8 @@
+prefix=/root/catkin_ws/src/diplomovka_planuj_drahu/cmake-build-debug/devel
+
+Name: diplomovka_planuj_drahu
+Description: Description of diplomovka_planuj_drahu
+Version: 0.0.0
+Cflags: 
+Libs: -L/root/catkin_ws/src/diplomovka_planuj_drahu/cmake-build-debug/devel/lib 
+Requires: actionlib actionlib_msgs geometry_msgs message_generation message_runtime moveit_msgs roscpp rospy std_msgs trajectory_msgs sensor_msgs

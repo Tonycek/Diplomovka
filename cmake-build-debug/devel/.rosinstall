@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /root/catkin_ws/src/diplomovka_planuj_drahu/cmake-build-debug/devel/setup.sh
