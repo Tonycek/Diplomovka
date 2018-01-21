@@ -30,10 +30,74 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <stdio.h>
+#include <termios.h>
+#include <termios.h>
+#include <unistd.h>
+#include <assert.h>
+#include <string.h>
+
+
 
 void error(const char *msg){
     perror(msg);
     exit(0);
+}
+
+int getch(void) {
+    int c=0;
+
+    struct termios org_opts, new_opts;
+    int res=0;
+    //-----  store old settings -----------
+    res=tcgetattr(STDIN_FILENO, &org_opts);
+    assert(res==0);
+    //---- set new terminal parms --------
+    memcpy(&new_opts, &org_opts, sizeof(new_opts));
+    new_opts.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHONL | ECHOPRT | ECHOKE | ICRNL);
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_opts);
+    c=getchar();
+    //------  restore old settings ---------
+    res=tcsetattr(STDIN_FILENO, TCSANOW, &org_opts);
+    assert(res==0);
+    return(c);
+}
+
+int keypress(unsigned char echo)
+{
+    struct termios savedState, newState;
+    int c;
+
+    if (-1 == tcgetattr(STDIN_FILENO, &savedState))
+    {
+        return EOF;     /* error on tcgetattr */
+    }
+
+    newState = savedState;
+
+    if ((echo = !echo)) /* yes i'm doing an assignment in an if clause */
+    {
+        echo = ECHO;    /* echo bit to disable echo */
+    }
+
+    /* disable canonical input and disable echo.  set minimal input to 1. */
+    newState.c_lflag &= ~(echo | ICANON);
+    newState.c_cc[VMIN] = 1;
+
+    if (-1 == tcsetattr(STDIN_FILENO, TCSANOW, &newState))
+    {
+        return EOF;     /* error on tcsetattr */
+    }
+
+    c = getchar();      /* block (withot spinning) until we get a keypress */
+
+    /* restore the saved state */
+    if (-1 == tcsetattr(STDIN_FILENO, TCSANOW, &savedState))
+    {
+        return EOF;     /* error on tcsetattr */
+    }
+
+    return c;
 }
 
 int main(int argc, char **argv){
@@ -51,7 +115,7 @@ int main(int argc, char **argv){
     if (sockfd < 0)
         error("ERROR opening socket");
     bzero((char *) &serv_addr, sizeof(serv_addr));
-    portno = 1070;//atoi(argv[1]);
+    portno = 1590;//atoi(argv[1]);
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(portno);
@@ -69,10 +133,15 @@ int main(int argc, char **argv){
     //n = read(newsockfd,buffer,255);
     //if (n < 0) error("ERROR reading from socket");
     //printf("Here is the message: %s\n",buffer);
-    n = write(newsockfd,"4",18);
-    if (n < 0) error("ERROR writing to socket");
-    close(newsockfd);
-    close(sockfd);
+    int converted = htonl(4);
+    //n = write(newsockfd,&converted, sizeof(converted));
+    n = write(newsockfd,"a",2);
+    if (n < 0)
+    {
+        error("ERROR writing to socket");
+        close(newsockfd);
+        close(sockfd);
+    }
 
     // zaciatok prace s ROSOM
   ros::init(argc, argv, "test");
@@ -266,6 +335,7 @@ service_request.ik_request.pose_stamped.pose.orientation.w = 0.0;
    std::cout << *ac.getResult() << std::endl;
    sleep(5);
 */
+    /*
    char input;
    std::cout << "Zadaj znak: "; 
    while(true){
@@ -284,7 +354,39 @@ service_request.ik_request.pose_stamped.pose.orientation.w = 0.0;
         sleep(5);
         break;
      } 
-   }
+   } */
+
+/*
+    printf("press a key to continue\n");
+    keypress(0);
+
+
+    printf("hit the spacebar to continue\n");
+    while (keypress(0) != ' ');
+*/
+    int znak;
+    printf("press a key to continue\n");
+   // keypress(0);
+
+    znak = keypress(0);
+
+    while (znak != 'q'){
+        if(znak == 'a') {
+            n = write(newsockfd, "a", 2);
+            printf("poslal som znak\n");
+        }
+        if (n < 0)
+        {
+            error("ERROR writing to socket");
+            close(newsockfd);
+            close(sockfd);
+        }
+
+        znak = keypress(0);
+    }
+
+    close(newsockfd);
+    close(sockfd);
 /*  
   goal.trajectory.joint_names.resize(7);
   goal.trajectory.joint_names.push_back("r_shoulder_pan_joint");

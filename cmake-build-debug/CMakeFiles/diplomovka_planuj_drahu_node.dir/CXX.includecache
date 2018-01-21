@@ -2251,4 +2251,16 @@ netinet/in.h
 -
 netdb.h
 -
+stdio.h
+-
+termios.h
+-
+termios.h
+-
+unistd.h
+-
+assert.h
+-
+string.h
+-
 
