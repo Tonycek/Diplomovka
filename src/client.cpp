@@ -115,7 +115,7 @@ int main(int argc, char **argv){
     if (sockfd < 0)
         error("ERROR opening socket");
     bzero((char *) &serv_addr, sizeof(serv_addr));
-    portno = 1590;//atoi(argv[1]);
+    portno = 1690;//atoi(argv[1]);
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(portno);
@@ -373,7 +373,19 @@ service_request.ik_request.pose_stamped.pose.orientation.w = 0.0;
     while (znak != 'q'){
         if(znak == 'a') {
             n = write(newsockfd, "a", 2);
-            printf("poslal som znak\n");
+            printf("poslal som a\n");
+        }
+        if(znak == 'w') {
+            n = write(newsockfd, "w", 2);
+            printf("poslal som w\n");
+        }
+        if(znak == 'd') {
+            n = write(newsockfd, "d", 2);
+            printf("poslal som d\n");
+        }
+        if(znak == 's') {
+            n = write(newsockfd, "s", 2);
+            printf("poslal som s\n");
         }
         if (n < 0)
         {
