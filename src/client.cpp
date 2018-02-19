@@ -21,7 +21,6 @@
 #include <sys/time.h>
 #include <termios.h>
 #include <signal.h>
-//#include "../../industrial_core/industrial_robot_client/include/industrial_robot_client/joint_trajectory_downloader.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -36,13 +35,23 @@
 #include <unistd.h>
 #include <assert.h>
 #include <string.h>
+#include <arpa/inet.h>
+#include "../../../../../home/tono/Plocha/OdbornaPrax/odborna prax/m2dmini.h"
+#include <bitset>
+#include <string>
 
-
+char buff_packet[10000];
+int vektorDistance[1000];
+int poradie=0;;
 
 void error(const char *msg){
     perror(msg);
     exit(0);
 }
+
+void parse_data();
+std::string toBinary(int);
+long toDecimal(std::string binary1);
 
 int getch(void) {
     int c=0;
@@ -101,21 +110,18 @@ int keypress(unsigned char echo)
 }
 
 int main(int argc, char **argv){
-
+/*
     int sockfd, newsockfd, portno;
     socklen_t clilen;
     char buffer[256];
     struct sockaddr_in serv_addr, cli_addr;
     int n;
-   /* if (argc < 2) {
-        fprintf(stderr,"ERROR, no port provided\n");
-        exit(1);
-    }*/
+
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
         error("ERROR opening socket");
     bzero((char *) &serv_addr, sizeof(serv_addr));
-    portno = 1690;//atoi(argv[1]);
+    portno = 1790;//atoi(argv[1]);
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(portno);
@@ -130,11 +136,9 @@ int main(int argc, char **argv){
     if (newsockfd < 0)
         error("ERROR on accept");
     bzero(buffer,256);
-    //n = read(newsockfd,buffer,255);
-    //if (n < 0) error("ERROR reading from socket");
-    //printf("Here is the message: %s\n",buffer);
+
     int converted = htonl(4);
-    //n = write(newsockfd,&converted, sizeof(converted));
+
     n = write(newsockfd,"a",2);
     if (n < 0)
     {
@@ -143,230 +147,9 @@ int main(int argc, char **argv){
         close(sockfd);
     }
 
-    // zaciatok prace s ROSOM
-  ros::init(argc, argv, "test");
-  ros::NodeHandle node_handle;
-
-  //industrial_robot_client::joint_trajectory_downloader::JointTrajectoryDownloader jtd;
-  //  jtd.send_to_robot();
-  actionlib::SimpleActionClient<moveit_msgs::MoveGroupAction> ac("/move_group/", true);
-
-/*
-  ros::service::waitForService("/compute_ik");
-  ros::ServiceClient ik_client = rh.serviceClient<moveit_msgs::GetPositionIK>("/compute_ik");
-  
-  moveit_msgs::KinematicSolverInfo request;
-  moveit_msgs::KinematicSolverInfo response;
-
-  // define the service messages
-  moveit_msgs::PositionIKRequest ik_request;
-  ik_request.group_name = "manipulator"; !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-  moveit_msgs::GetPositionIK::Request  gpik_req;
-  moveit_msgs::GetPositionIK::Response gpik_res;
-*/
-  ROS_INFO("Waiting for action server to start!");
-
-  ac.waitForServer();
-
-  ROS_INFO("Action server started, sending goal.");
-  // send a goal to the action
-  moveit_msgs::MoveGroupGoal goal;
-    
-  goal.request.group_name = "manipulator";  //!!!!!!!!!!!!!!!!!!!!!!
-//  goal.request.num_planning_attempts = 1;
-//  goal.request.allowed_planning_time = 10; //!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  
-//  gpik_req.timeout = ros::Duration(5.0);
-//  gpik_req.ik_request.ik_link_name = "r_wrist_roll_link";
-
-//  gpik_req.ik_request.pose_stamped.header.frame_id = "torso_lift_link";
-/*
-  gpik_req.ik_request.pose_stamped.pose.position.x = 0.75;
-  gpik_req.ik_request.pose_stamped.pose.position.y = 0.5;
-  gpik_req.ik_request.pose_stamped.pose.position.z = 0.5;
-  gpik_req.ik_request.group_name = "manipulator";
-
-  gpik_req.ik_request.pose_stamped.pose.orientation.x = 0.5;
-  gpik_req.ik_request.pose_stamped.pose.orientation.y = 0.5;
-  gpik_req.ik_request.pose_stamped.pose.orientation.z = 0.5;
-  gpik_req.ik_request.pose_stamped.pose.orientation.w = 1.0;
-  gpik_req.ik_request.robot_state.joint_state.position.resize(response.joint_names.size());
-  gpik_req.ik_request.robot_state.joint_state.name = response.joint_names;
-
-  for(unsigned int i=0; i< response.joint_names.size(); i++)
-  {
-    gpik_req.ik_request.robot_state.joint_state.position[i] = (response.limits[i].min_position + response.limits[i].max_position)/2.0;
-  }
-
-  if(ik_client.call(gpik_req, gpik_res))
-  {
-    if(gpik_res.error_code.val == gpik_res.error_code.SUCCESS)
-      for(unsigned int i=0; i < gpik_res.solution.joint_state.name.size(); i ++)
-        ROS_INFO("Joint: %s %f",gpik_res.solution.joint_state.name[i].c_str(),gpik_res.solution.joint_state.position[i]);
-    else
-      ROS_ERROR("Inverse kinematics failed");
-  }
-  else
-    ROS_ERROR("Inverse kinematics service call failed"); */
-//    ros::shutdown();
-/*
-  ros::ServiceClient service_client = node_handle.serviceClient<moveit_msgs::GetPositionIK> ("compute_ik");
-
-  robot_model_loader::RDFLoader robot_model_loader("robot_description"); 
-robot_model::RobotModelPtr kinematic_model = robot_model_loader.getModel();
-robot_state::RobotStatePtr kinematic_state(new robot_state::RobotState(kinematic_model));
-robot_state::JointStateGroup* joint_state_group = kinematic_state->getJointStateGroup("right_arm");
-service_request.ik_request.robot_state.joint_state.name = joint_state_group->getJointModelGroup()->getJointModelNames();
-joint_state_group->setToRandomValues();
-joint_state_group->getVariableValues(service_request.ik_request.robot_state.joint_state.position);
-
-while(!service_client.exists())
-{
-  ROS_INFO("Waiting for service");
-  sleep(1.0);
-}
-
-  moveit_msgs::GetPositionIK::Request service_request;
-moveit_msgs::GetPositionIK::Response service_response;
-service_request.ik_request.group_name = "manipulator";
-service_request.ik_request.pose_stamped.header.frame_id = "base";  
-service_request.ik_request.pose_stamped.pose.position.x = 0.235;
-service_request.ik_request.pose_stamped.pose.position.y = -0.2996;
-service_request.ik_request.pose_stamped.pose.position.z = -0.3011;
-service_request.ik_request.pose_stamped.pose.orientation.x = 0.674056;
-service_request.ik_request.pose_stamped.pose.orientation.y = -0.73868;
-service_request.ik_request.pose_stamped.pose.orientation.z = 0.0;
-service_request.ik_request.pose_stamped.pose.orientation.w = 0.0;
-
-   if(service_client.call(service_request, service_response)){
-      for(unsigned int i=0; i< service_response.solution.joint_state.name.size(); i++)
-    {
-      ROS_DEBUG("Joint: %d %s",i,service_response.solution.joint_state.name[i].c_str());
-    }
-   }
-*/
-//   ROS_INFO("Joint: 1 %s",service_response.solution.joint_state.name[0]);
-   sleep(2);
-//##########################################################################  
-/*
-  geometry_msgs::PoseStamped pose;
-  pose.header.frame_id = "torso_lift_link";
-  pose.pose.position.x = 0.75;
-  pose.pose.position.y = -0.2;
-  pose.pose.position.z = 0.0;
-  pose.pose.orientation.x = 0.0;
-  pose.pose.orientation.y = 0.0;
-  pose.pose.orientation.z = 0.0;
-  pose.pose.orientation.w = 1.0;
-  geometry_msgs::Vector3 positione;
-  positione.x = 0.75;
-  positione.y = -0.2;
-  positione.z = 0.0;*/
-
-  moveit_msgs::Constraints g0;
-  g0.joint_constraints.resize(6);
-  g0.joint_constraints[0].joint_name= "joint_1";
-  g0.joint_constraints[0].position = 0;// -0.157835049197; 
-  g0.joint_constraints[0].tolerance_above = 0.0001;
-  g0.joint_constraints[0].weight = 1.0; 
-
-  g0.joint_constraints[1].joint_name= "joint_2";
-  g0.joint_constraints[1].position = 0;//-0.157835049197;
-  g0.joint_constraints[1].tolerance_above = 0.0001;
-  g0.joint_constraints[1].weight = 1.0;
-
-  g0.joint_constraints[2].joint_name= "joint_3";
-  g0.joint_constraints[2].position = 0;//-0.157835049197;
-  g0.joint_constraints[2].tolerance_above = 0.0001;
-  g0.joint_constraints[2].weight = 1.0;
-
-  g0.joint_constraints[3].joint_name= "joint_4";
-  g0.joint_constraints[3].position = 0;//-0.157835049197;
-  g0.joint_constraints[3].tolerance_above = 0.0001;
-  g0.joint_constraints[3].weight = 1.0;
-
-  g0.joint_constraints[4].joint_name= "joint_5";
-  g0.joint_constraints[4].position = 0;//-0.157835049197;
-  g0.joint_constraints[4].tolerance_above = 0.0001;
-  g0.joint_constraints[4].weight = 1.0;
-
-  g0.joint_constraints[5].joint_name= "joint_6";
-  g0.joint_constraints[5].position = 0;//-0.157835049197;
-  g0.joint_constraints[5].tolerance_above = 0.0001;
-  g0.joint_constraints[5].weight = 1.0; 
-
-  goal.request.goal_constraints.resize(1);
-  goal.request.goal_constraints[0] = g0;
-//  g0.target_point_offset = positione;
-/*
-  goal.request.workspace_parameters.header.seq = 0;
-  goal.request.workspace_parameters.header.frame_id = "/base_link";  
-
-  goal.request.workspace_parameters.min_corner.x = -1;
-  goal.request.workspace_parameters.min_corner.y = -1;
-  goal.request.workspace_parameters.min_corner.z = -1;  
-
-  goal.request.goal_constraints.resize(1);
-  goal.request.goal_constraints[0].joint_constraints.resize(1);
-  goal.request.goal_constraints[0].joint_constraints[0].joint_name = "joint111";
-  goal.request.goal_constraints[0].joint_constraints[0].position = -0.30;
-  goal.request.goal_constraints[0].joint_constraints[0].tolerance_above = 0.0001;
-  goal.request.goal_constraints[0].joint_constraints[0].tolerance_below = 0.0001;
-  goal.request.goal_constraints[0].joint_constraints[0].weight = 1;
-*/ 
-
-/*
-  while (ros::ok())
-  {
-     ac.sendGoal(goal);
-  }
-*/
-/*
-  ac.sendGoal(goal);
-   if(!ac.waitForResult(ros::Duration(5))) {
-     ROS_INFO_STREAM("Apparently returned early");
-   }
-   if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-     ROS_INFO("It worked!");
-   else
-   ROS_WARN_STREAM("Fail: " << ac.getState().toString() << ": " << ac.getState().getText());
-   std::cout << *ac.getResult() << std::endl;
-   sleep(5);
-*/
-    /*
-   char input;
-   std::cout << "Zadaj znak: "; 
-   while(true){
-     std::cin >> input;
-     if (input == 'k')
-     {
-        ac.sendGoal(goal);
-        if(!ac.waitForResult(ros::Duration(10))) {
-           ROS_INFO_STREAM("Apparently returned early");
-        }
-        if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-          ROS_INFO("It worked!");
-        else
-        ROS_WARN_STREAM("Fail: " << ac.getState().toString() << ": " << ac.getState().getText());
-        std::cout << *ac.getResult() << std::endl;
-        sleep(5);
-        break;
-     } 
-   } */
-
-/*
-    printf("press a key to continue\n");
-    keypress(0);
-
-
-    printf("hit the spacebar to continue\n");
-    while (keypress(0) != ' ');
-*/
     int znak;
     printf("press a key to continue\n");
-   // keypress(0);
+
 
     znak = keypress(0);
 
@@ -399,59 +182,176 @@ service_request.ik_request.pose_stamped.pose.orientation.w = 0.0;
 
     close(newsockfd);
     close(sockfd);
-/*  
-  goal.trajectory.joint_names.resize(7);
-  goal.trajectory.joint_names.push_back("r_shoulder_pan_joint");
-    goal.trajectory.joint_names.push_back("r_shoulder_lift_joint");
-    goal.trajectory.joint_names.push_back("r_upper_arm_roll_joint");
-    goal.trajectory.joint_names.push_back("r_elbow_flex_joint");
-    goal.trajectory.joint_names.push_back("r_forearm_roll_joint");
-    goal.trajectory.joint_names.push_back("r_wrist_flex_joint");
-    goal.trajectory.joint_names.push_back("r_wrist_roll_joint");
-  
-  goal.trajectory.points.resize(2);
-   
-  // First trajectory point
-  // Positions
-  int ind = 0;
-  goal.trajectory.points[ind].positions.resize(7);
-  goal.trajectory.points[ind].positions[0] = 0.0;
-  goal.trajectory.points[ind].positions[1] = 0.0;
-  goal.trajectory.points[ind].positions[2] = 0.0;
-  goal.trajectory.points[ind].positions[3] = 0.0;
-  goal.trajectory.points[ind].positions[4] = 0.0;
-  goal.trajectory.points[ind].positions[5] = 0.0;
-  goal.trajectory.points[ind].positions[6] = 0.0;
+*/
 
+    char server_reply[2000];
 
-  goal.trajectory.points[ind].velocities.resize(7);
-    for (size_t j = 0; j < 7; ++j)
-    {
-      goal.trajectory.points[ind].velocities[j] = 0.0;
+    int header_received = 0, packet_position=0, packets=0;
+    int sensor_socket;
+    sensor_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (sensor_socket < 0)
+        error("ERROR opening socket");
+
+    struct sockaddr_in sensor_serv_addr;
+    sensor_serv_addr.sin_port = htons(atoi("3000"));
+    sensor_serv_addr.sin_family = AF_INET;
+    sensor_serv_addr.sin_addr.s_addr = inet_addr("192.168.123.245");
+
+    if (connect(sensor_socket,(struct sockaddr *)&sensor_serv_addr,sizeof(sensor_serv_addr)) < 0){
+        printf("\nError: Connect failed\n");
+        return -1;
     }
-    // To be reached 1 second after starting along the trajectory
-    goal.trajectory.points[ind].time_from_start = ros::Duration(1.0);
 
-    // Second trajectory point
-    // Positions
-    ind += 1;
-    goal.trajectory.points[ind].positions.resize(7);
-    goal.trajectory.points[ind].positions[0] = -0.3;
-    goal.trajectory.points[ind].positions[1] = 0.2;
-    goal.trajectory.points[ind].positions[2] = -0.1;
-    goal.trajectory.points[ind].positions[3] = -1.2;
-    goal.trajectory.points[ind].positions[4] = 1.5;
-    goal.trajectory.points[ind].positions[5] = -0.3;
-    goal.trajectory.points[ind].positions[6] = 0.5;
-    // Velocities
-    goal.trajectory.points[ind].velocities.resize(7);
-    for (size_t j = 0; j < 7; ++j)
-    {
-      goal.trajectory.points[ind].velocities[j] = 0.0;
+    while (1) {
+        int pocet = recv(sensor_socket, server_reply, 2000, 0);
+
+        if (pocet == 0 || pocet < 0) {
+
+            printf("server reply: ");
+
+        } else {
+
+            if(header_received == 0)
+            {
+                for (int n = 0; n < pocet - 9; n++) {
+
+                    if(server_reply[n] == 0 &&
+                      server_reply[n+1] == 0 &&
+                      server_reply[n+2] == 0 &&
+                      server_reply[n+3] == 0 &&
+                      server_reply[n+4] == 0 &&
+                      server_reply[n+5] == 0 &&
+                      server_reply[n+6] == 0 &&
+                      server_reply[n+7] == 0 &&
+                      server_reply[n+8] == 3 &&
+                      server_reply[n+9] == 1){
+
+                        header_received=1;
+                        memcpy(buff_packet,server_reply,pocet);
+                        packet_position = packet_position + pocet;
+                    }
+                }
+            }
+
+            else{
+
+                memcpy(buff_packet + packet_position, server_reply, pocet);
+                packets++;
+                packet_position = packet_position+pocet;
+                parse_data();
+                packet_position = 0;
+                header_received = 0;
+            //    buff_packet[0]='/0';
+                break;//*******************************
+            }
+
+
+            //printf("server reply: ");
+
+        }
+      // packet_position = 0;
+     //   delete []buff_packet;
+/*
+            if(header_received==0){
+
+                for (int i = 0; i < pocet-9; i++) {
+
+                    if(server_reply[i] == 0 &&
+                       server_reply[i+1] == 0 &&
+                            server_reply[i+2] == 0 &&
+                            server_reply[i+3] == 0 &&
+                            server_reply[i+4] == 0 &&
+                            server_reply[i+5] == 0 &&
+                            server_reply[i+6] == 0 &&
+                            server_reply[i+7] == 0 &&
+                            server_reply[i+8] == 3 &&
+                            server_reply[i+9] == 1){
+
+                        header_received=1;
+                        memcpy(buff_packet,server_reply,pocet);
+                        packet_position = packet_position + pocet;
+                    }
+
+                }
+
+            }
+            else{
+
+                memcpy(buff_packet + packet_position, server_reply, pocet);
+                packets++;
+                packet_position = packet_position+pocet;
+                parse_data();
+                packet_position = 0;
+                header_received = 0;
+            }
+
     }
-    
-    goal.trajectory.points[ind].time_from_start = ros::Duration(2.0);
-  */ 
+*/
+    }
+
+  //  for (int g = 0; g < 1000; ++g) {
+    //    printf("%f/n",vektorDistance[g]);
+    //}
 
  return 0;
+}
+
+void parse_data(){
+    for (int i = 0; i < 2048; ++i) {
+
+       // char ccc = (char)-36;
+       // int cislo1 = (int)buff_packet[68+i*5];
+       // int cislo2 = (int)buff_packet[69+i*5];
+
+        double x = buff_packet[66+i*5] + buff_packet[67+i*5] + 128;
+        double z = buff_packet[68+i+5] + buff_packet[69+i*5] + 128;
+        double z1 = buff_packet[68+i+5];
+        double z2 = buff_packet[69+i+5];
+        //double z1 = 60 + 80 * ((double)cislo2/4095);
+
+        std::bitset<8> bin_z1((int)z1);
+      //  std::cout << bin_z1;
+        std::bitset<5> bin_z2((int)z2);
+        std::cout << bin_z1.to_string();
+
+        std::string retazec1 = bin_z1.to_string() + bin_z2.to_string();
+//                toBinary((int)bin_z1.to_ulong()) + toBinary((int)bin_z2.to_ulong());
+        std::bitset<14> baz(retazec1);
+        //baz.to_ulong();
+       // long vysledok = toDecimal(retazec1);
+        vektorDistance[poradie++] = baz.to_ulong();
+
+        //if(z != 60)
+          //  printf("vypis");
+
+        printf("/f/n",z);
+    }
+}
+
+std::string toBinary(int n)
+{
+    //int n = stoi
+    std::string r;
+    while(n!=0) {r=(n%2==0 ?"0":"1")+r; n/=2;}
+    return r;
+}
+
+long toDecimal(std::string binary1)
+{
+
+    std::bitset<8> baz (std::string(binary1));
+
+    /*
+    long num = atoi(binary1.c_str());
+    long bin, dec = 0, rem, base = 1;
+
+    while (num > 0)
+    {
+        rem = num % 10;
+        dec = dec + rem * base;
+        base = base * 2;
+        num = num / 10;
+    }*/
+
+    return 100;
 }

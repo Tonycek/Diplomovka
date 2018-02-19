@@ -6,6 +6,8 @@
 
 #IncludeRegexTransform: 
 
+/home/tono/Plocha/OdbornaPrax/odborna prax/m2dmini.h
+
 /opt/ros/kinetic/include/actionlib_msgs/GoalID.h
 string
 -
@@ -2262,5 +2264,13 @@ unistd.h
 assert.h
 -
 string.h
+-
+arpa/inet.h
+-
+../../../../../home/tono/Plocha/OdbornaPrax/odborna prax/m2dmini.h
+/home/tono/Plocha/OdbornaPrax/odborna prax/m2dmini.h
+bitset
+-
+string
 -
 
