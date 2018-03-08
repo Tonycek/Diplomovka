@@ -41,7 +41,7 @@
 #include <string>
 
 char buff_packet[10000];
-int vektorDistance[1000];
+int vektorDistance[289];
 int poradie=0;;
 
 void error(const char *msg){
@@ -232,16 +232,19 @@ int main(int argc, char **argv){
                     // packet_position = packet_position + pocet;
                     parse_data();
 
-                    if(buff_packet[68]==127 && buff_packet[69]==31) {
-                        printf("Vpravo nic\n");
+                    int N = 289;//sizeof(vektorDistance);
+                    int najmensiPrvokCislo = std::distance(vektorDistance,std::min_element(vektorDistance,vektorDistance+N));
+
+                    if(najmensiPrvokCislo < 140) {
+                        printf("Chod Vpravo\n");
                         buff_packet[0]='\0';
                        // break;
-                    } else{
-                        printf("Vpravo nieco\n");
+                    } else if(najmensiPrvokCislo > 150){
+                        printf("Chod Vlavo\n");
                         buff_packet[0]='\0';
                         //break;
                     }
-
+                    close(sensor_socket);
                     //if(buff_packet[1513]!=127 && buff_packet[1514]!=31)
                     //  printf("Vlavo nic\n");
                 }
@@ -378,9 +381,9 @@ void parse_data(){
         //if(z != 60)
           //  printf("vypis");
 
-        printf("/f/n",z);
+       // printf("/f/n",z);
     }
-    printf("ok/n");
+    //printf("ok/n");
 }
 
 std::string toBinary(int n)
