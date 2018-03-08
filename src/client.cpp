@@ -184,7 +184,7 @@ int main(int argc, char **argv){
     close(sockfd);
 */
 
-    char server_reply[2000];
+    char server_reply[10000];
 
     int header_received = 0, packet_position=0, packets=0;
     int sensor_socket;
@@ -203,32 +203,86 @@ int main(int argc, char **argv){
     }
 
     while (1) {
-        int pocet = recv(sensor_socket, server_reply, 2000, 0);
+        int pocet = recv(sensor_socket, server_reply, 2048, 0);
 
         if (pocet == 0 || pocet < 0) {
 
             printf("server reply: ");
 
-        } else {
+        }
+
+        else
+        {
+            for (int n = 0; n < pocet - 5; n++) {
+
+                if(server_reply[n] == 0 &&
+                   server_reply[n+1] == 8 &&
+                   server_reply[n+2] == -36 &&
+                   server_reply[n+3] == 0 &&
+                   server_reply[n+4] == 0 &&
+                   server_reply[n+5] == 0) //&&
+                    //server_reply[n+6] == 0 &&
+                    //server_reply[n+7] == 0 &&
+                    //server_reply[n+8] == 3 &&
+                    //server_reply[n+9] == 1)
+                {
+
+                    // header_received=1;
+                    memcpy(buff_packet,&server_reply[n],sizeof(server_reply));
+                    // packet_position = packet_position + pocet;
+                    parse_data();
+
+                    if(buff_packet[68]==127 && buff_packet[69]==31) {
+                        printf("Vpravo nic\n");
+                        buff_packet[0]='\0';
+                       // break;
+                    } else{
+                        printf("Vpravo nieco\n");
+                        buff_packet[0]='\0';
+                        //break;
+                    }
+
+                    //if(buff_packet[1513]!=127 && buff_packet[1514]!=31)
+                    //  printf("Vlavo nic\n");
+                }
+            }
+        }
+
+            /*
+        else {
 
             if(header_received == 0)
             {
                 for (int n = 0; n < pocet - 9; n++) {
 
                     if(server_reply[n] == 0 &&
-                      server_reply[n+1] == 0 &&
-                      server_reply[n+2] == 0 &&
+                      server_reply[n+1] == 8 &&
+                      server_reply[n+2] == -36 &&
                       server_reply[n+3] == 0 &&
                       server_reply[n+4] == 0 &&
-                      server_reply[n+5] == 0 &&
-                      server_reply[n+6] == 0 &&
-                      server_reply[n+7] == 0 &&
-                      server_reply[n+8] == 3 &&
-                      server_reply[n+9] == 1){
+                      server_reply[n+5] == 0) //&&
+                      //server_reply[n+6] == 0 &&
+                      //server_reply[n+7] == 0 &&
+                      //server_reply[n+8] == 3 &&
+                      //server_reply[n+9] == 1)
+                      {
 
-                        header_received=1;
-                        memcpy(buff_packet,server_reply,pocet);
-                        packet_position = packet_position + pocet;
+                       // header_received=1;
+                        memcpy(buff_packet,&server_reply[n],sizeof(server_reply));
+                       // packet_position = packet_position + pocet;
+
+                        if(buff_packet[68]==127 && buff_packet[69]==31) {
+                            printf("Vpravo nic\n");
+                            buff_packet[0]='\0';
+                            break;
+                        } else{
+                            printf("Vpravo nieco\n");
+                            buff_packet[0]='\0';
+                            break;
+                        }
+
+                        //if(buff_packet[1513]!=127 && buff_packet[1514]!=31)
+                          //  printf("Vlavo nic\n");
                     }
                 }
             }
@@ -242,13 +296,13 @@ int main(int argc, char **argv){
                 packet_position = 0;
                 header_received = 0;
             //    buff_packet[0]='/0';
-                break;//*******************************
+                //break;//*******************************
             }
 
 
             //printf("server reply: ");
 
-        }
+        }*/
       // packet_position = 0;
      //   delete []buff_packet;
 /*
@@ -297,7 +351,7 @@ int main(int argc, char **argv){
 }
 
 void parse_data(){
-    for (int i = 0; i < 2048; ++i) {
+    for (int i = 0; i < 289; ++i) {
 
        // char ccc = (char)-36;
        // int cislo1 = (int)buff_packet[68+i*5];
@@ -305,16 +359,16 @@ void parse_data(){
 
         double x = buff_packet[66+i*5] + buff_packet[67+i*5] + 128;
         double z = buff_packet[68+i+5] + buff_packet[69+i*5] + 128;
-        double z1 = buff_packet[68+i+5];
-        double z2 = buff_packet[69+i+5];
+        double z1 = buff_packet[68+i*5];
+        double z2 = buff_packet[69+i*5];
         //double z1 = 60 + 80 * ((double)cislo2/4095);
 
-        std::bitset<8> bin_z1((int)z1);
+        std::bitset<7> bin_z1((int)z1);
       //  std::cout << bin_z1;
-        std::bitset<5> bin_z2((int)z2);
+        std::bitset<7> bin_z2((int)z2);
         std::cout << bin_z1.to_string();
 
-        std::string retazec1 = bin_z1.to_string() + bin_z2.to_string();
+        std::string retazec1 = bin_z2.to_string() + bin_z1.to_string();
 //                toBinary((int)bin_z1.to_ulong()) + toBinary((int)bin_z2.to_ulong());
         std::bitset<14> baz(retazec1);
         //baz.to_ulong();
@@ -326,6 +380,7 @@ void parse_data(){
 
         printf("/f/n",z);
     }
+    printf("ok/n");
 }
 
 std::string toBinary(int n)
